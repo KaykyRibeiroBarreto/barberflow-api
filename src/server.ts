@@ -1,5 +1,6 @@
 import express from 'express'
 import { userRoutes } from './routes/user.routes'
+import { errorHandler } from './middlewares/errorHandler'
 
 const app = express()
 
@@ -18,6 +19,9 @@ app.use('/users', userRoutes)
 app.get('/', (req, res) => {
   res.json({ message: 'BarberFlow API está rodando!' })
 })
+
+// Middleware global de tratamento de erros (DEVE ser o último)
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3333
 

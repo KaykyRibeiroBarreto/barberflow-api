@@ -1,24 +1,23 @@
 import { Router } from 'express'
 import { prisma } from '../lib/prisma'
+import { AppError } from '../errors/AppError'
 
 /**
  * Arquivo de rotas para a entidade User.
- * O Router do Express permite agrupar rotas relacionadas em um único objeto.
  */
 const userRoutes = Router()
 
 /**
  * POST /users - Cria um novo usuário
  */
-userRoutes.post('/', async (req: any, res: any) => {
+userRoutes.post('/', async (req, res) => {
+  const { name, email, password, phone, role } = req.body
+
+  if (!name || !email || !password) {
+    throw new AppError('Nome, email e senha são obrigatórios')
+  }
+
   try {
-    const { name, email, password, phone, role } = req.body
-
-    if (!name || !email || !password) {
-      res.status(400).json({ error: 'Nome, email e senha são obrigatórios' })
-      return
-    }
-
     const user = await prisma.user.create({
       data: {
         name,
@@ -31,27 +30,22 @@ userRoutes.post('/', async (req: any, res: any) => {
 
     res.status(201).json(user)
   } catch (error: any) {
+    // Erro específico do Prisma: Unique constraint failed
     if (error.code === 'P2002') {
-      res.status(400).json({ error: 'Este e-mail já está em uso' })
-      return
+      throw new AppError('Este e-mail já está em uso', 400)
     }
 
-    console.error('Erro ao criar usuário:', error)
-    res.status(500).json({ error: 'Erro interno ao criar usuário' })
+    // Se for outro erro inesperado, apenas relançamos para o middleware global
+    throw error
   }
 })
 
 /**
  * GET /users - Lista todos os usuários
  */
-userRoutes.get('/', async (req: any, res: any) => {
-  try {
-    const users = await prisma.user.findMany()
-    res.status(200).json(users)
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error)
-    res.status(500).json({ error: 'Erro interno ao buscar usuários' })
-  }
+userRoutes.get('/', async (req, res) => {
+  const users = await prisma.user.findMany()
+  res.status(200).json(users)
 })
 
 export { userRoutes }
