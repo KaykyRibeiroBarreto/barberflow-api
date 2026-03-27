@@ -12,6 +12,10 @@ import { PrismaClient } from '../generated/prisma/client'
 // 1. Carregamos a URL de conexão do ambiente
 const connectionString = process.env.DATABASE_URL
 
+if (!connectionString) {
+    throw new Error('DATABASE_URL não encontrada no arquivo .env')  
+}
+
 // 2. Criamos um pool de conexões usando o driver 'pg'
 const pool = new Pool({ connectionString })
 
